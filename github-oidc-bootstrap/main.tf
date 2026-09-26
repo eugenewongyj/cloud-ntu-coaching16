@@ -31,6 +31,26 @@ resource "aws_iam_role_policy_attachment" "s3_full" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }
 
+resource "aws_iam_role_policy_attachment" "route53_full" {
+  role       = aws_iam_role.github_oidc.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonRoute53FullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "dynamodb_full" {
+  role       = aws_iam_role.github_oidc.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "apigateway_admin" {
+  role       = aws_iam_role.github_oidc.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator"
+}
+
+resource "aws_iam_role_policy_attachment" "certificate_manager_full" {
+  role       = aws_iam_role.github_oidc.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSCertificateManagerFullAccess"
+}
+
 variable "github_repository_username" {
   description = "GitHub repository username"
   type        = string
