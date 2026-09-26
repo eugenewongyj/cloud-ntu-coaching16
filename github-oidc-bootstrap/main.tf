@@ -107,19 +107,19 @@ resource "aws_iam_role_policy_attachment" "certificate_manager_full" {
 variable "github_repository_username" {
   description = "GitHub repository username"
   type        = string
-  default     = "eugenewongyj"
+  default     = "peh3"
 }
 
 variable "github_repository_name" {
   description = "GitHub repository name"
   type        = string
-  default     = "cloud-ntu-coaching16"
+  default     = "tf-coaching16"
 }
 
 variable "github_oidc_role_name" {
   description = "Name of the GitHub OIDC role"
   type        = string
-  default     = "group2-coaching16-github-oidc-role"
+  default     = "tk-tf-coaching16-github-oidc-role"
 }
 
 output "github_oidc_role_arn" {
