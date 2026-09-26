@@ -71,7 +71,7 @@ resource "aws_api_gateway_base_path_mapping" "shortener" {
 
 # 5. Route 53 DNS Record pointing to the Custom Domain
 data "aws_route53_zone" "primary" {
-  name         = "grp2.sctp.sandbox.com."
+  name         = "sctp.sandbox.com"
   private_zone = false
 }
 
