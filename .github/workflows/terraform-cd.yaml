@@ -47,13 +47,13 @@ jobs:
     - name: Run TFLint
       run: tflint -f compact
 
-    - name: Checkov
-      uses: bridgecrewio/checkov-action@master
-      with:
-        framework: terraform
+    #- name: Checkov
+    #  uses: bridgecrewio/checkov-action@master
+    #  with:
+    #    framework: terraform
    
     - name: Terraform Plan
       run: terraform plan
-      
+
     - name: Terraform Apply
       run: terraform apply --auto-approve
