@@ -55,7 +55,7 @@ resource "aws_api_gateway_stage" "prod" {
 # 3. API Gateway Custom Domain Name
 resource "aws_api_gateway_domain_name" "shortener" {
   domain_name              = "grp2.sctp-sandbox.com"
-  regional_certificate_arn = aws_acm_certificate.cert.arn
+  regional_certificate_arn = aws_acm_certificate_validation.cert.certificate_arn
 
   endpoint_configuration {
     types = ["REGIONAL"]
@@ -73,6 +73,27 @@ resource "aws_api_gateway_base_path_mapping" "shortener" {
 data "aws_route53_zone" "primary" {
   name         = "sctp-sandbox.com"
   private_zone = false
+}
+
+resource "aws_route53_record" "cert_validation" {
+  for_each = {
+    for option in aws_acm_certificate.cert.domain_validation_options : option.domain_name => {
+      name   = option.resource_record_name
+      record = option.resource_record_value
+      type   = option.resource_record_type
+    }
+  }
+
+  zone_id = data.aws_route53_zone.primary.zone_id
+  name    = each.value.name
+  type    = each.value.type
+  records = [each.value.record]
+  ttl     = 60
+}
+
+resource "aws_acm_certificate_validation" "cert" {
+  certificate_arn         = aws_acm_certificate.cert.arn
+  validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
 }
 
 resource "aws_route53_record" "www" {
