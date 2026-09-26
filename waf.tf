@@ -47,7 +47,7 @@ resource "aws_wafv2_web_acl" "api_gw_waf" {
 
 # Attach WAF directly to the API Gateway Stage
 resource "aws_wafv2_web_acl_association" "waf_assoc" {
-  resource_arn = aws_api_gateway_stage.stage.arn
+  resource_arn = aws_api_gateway_stage.prod.arn
   web_acl_arn  = aws_wafv2_web_acl.api_gw_waf.arn
 }
 
