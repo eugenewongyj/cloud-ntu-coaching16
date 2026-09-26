@@ -56,6 +56,7 @@ data "aws_iam_policy_document" "deployment_extra_permissions" {
       "iam:DeleteRolePolicy",
       "iam:AttachRolePolicy",
       "iam:DetachRolePolicy",
+      "iam:ListInstanceProfilesForRole", # <-- Required by Terraform to delete roles
       "iam:PassRole",
       "iam:TagRole"
     ]
@@ -76,32 +77,24 @@ data "aws_iam_policy_document" "deployment_extra_permissions" {
     ]
     resources = ["*"]
   }
+
+  statement {
+    sid    = "CertificateAndHostedZoneLookups"
+    effect = "Allow"
+    actions = [
+      "acm:DescribeCertificate",
+      "acm:ListCertificates",
+      "route53:GetHostedZone",
+      "route53:ListHostedZones"
+    ]
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_role_policy" "extra_permissions" {
   name   = "pipeline-extra-deployment-permissions"
   role   = aws_iam_role.github_oidc.name
   policy = data.aws_iam_policy_document.deployment_extra_permissions.json
-}
-
-resource "aws_iam_role_policy_attachment" "route53_full" {
-  role       = aws_iam_role.github_oidc.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonRoute53FullAccess"
-}
-
-resource "aws_iam_role_policy_attachment" "dynamodb_full" {
-  role       = aws_iam_role.github_oidc.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
-}
-
-resource "aws_iam_role_policy_attachment" "apigateway_admin" {
-  role       = aws_iam_role.github_oidc.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator"
-}
-
-resource "aws_iam_role_policy_attachment" "certificate_manager_full" {
-  role       = aws_iam_role.github_oidc.name
-  policy_arn = "arn:aws:iam::aws:policy/AWSCertificateManagerFullAccess"
 }
 
 variable "github_repository_username" {
