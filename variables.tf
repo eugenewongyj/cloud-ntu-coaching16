@@ -1,7 +1,7 @@
 variable "project_name" {
   description = "Project name prefix"
   type        = string
-  default     = "tk-tf-coaching16"
+  default     = "grp2-coaching16"
 }
 
 variable "my_allowed_ip_cidr" {
