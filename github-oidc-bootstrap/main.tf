@@ -25,12 +25,12 @@ resource "aws_iam_role" "github_oidc" {
   assume_role_policy = data.aws_iam_policy_document.github_trust.json
 }
 
-/*
+
 resource "aws_iam_role_policy_attachment" "s3_full" {
   role       = aws_iam_role.github_oidc.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }
-*/
+
 variable "github_repository_username" {
   description = "GitHub repository username"
   type        = string
