@@ -1,4 +1,4 @@
-name: Terraform CI
+name: Terraform CD
 
 on:
   push:
@@ -46,11 +46,6 @@ jobs:
 
     - name: Run TFLint
       run: tflint -f compact
-
-    #- name: Checkov
-    #  uses: bridgecrewio/checkov-action@master
-    #  with:
-    #    framework: terraform
    
     - name: Terraform Plan
       run: terraform plan
