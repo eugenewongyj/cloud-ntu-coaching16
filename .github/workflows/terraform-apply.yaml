@@ -1,0 +1,45 @@
+name: Terraform Deployment
+
+on:
+  push:
+    branches: [ "main" ]
+
+
+permissions:
+  id-token: write       # Required for OIDC
+  contents: read        # To read repo content
+
+jobs:
+  CICD:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v7
+   
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v6
+      with:
+        role-to-assume: ${{ vars.OIDC_ROLE }}
+        aws-region: ${{ vars.AWS_REGION }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v4
+
+    - name: Inspect Workspace and Files
+      run: |
+          echo "Current working directory:"
+          pwd
+          echo "Listing all files in this directory:"
+          ls -la
+          echo "Finding all .tf files:"
+          find . -name "*.tf"
+   
+    - name: Terraform Init
+      run: terraform init
+
+    - name: Terraform Plan
+      run: terraform plan
+   
+    - name: Terraform Apply
+      run: terraform apply --auto-approve
