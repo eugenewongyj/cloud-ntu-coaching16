@@ -1,6 +1,6 @@
 # 1. ACM Certificate (Must be REGIONAL for Regional API Gateway endpoint)
 resource "aws_acm_certificate" "cert" {
-  domain_name       = "grp2.sctp.sandbox.com"
+  domain_name       = "grp2.sctp-sandbox.com"
   validation_method = "DNS"
 
   lifecycle {
@@ -54,7 +54,7 @@ resource "aws_api_gateway_stage" "prod" {
 
 # 3. API Gateway Custom Domain Name
 resource "aws_api_gateway_domain_name" "shortener" {
-  domain_name              = "grp2.sctp.sandbox.com"
+  domain_name              = "grp2.sctp-sandbox.com"
   regional_certificate_arn = aws_acm_certificate.cert.arn
 
   endpoint_configuration {
@@ -71,7 +71,7 @@ resource "aws_api_gateway_base_path_mapping" "shortener" {
 
 # 5. Route 53 DNS Record pointing to the Custom Domain
 data "aws_route53_zone" "primary" {
-  name         = "sctp.sandbox.com"
+  name         = "sctp-sandbox.com"
   private_zone = false
 }
 
