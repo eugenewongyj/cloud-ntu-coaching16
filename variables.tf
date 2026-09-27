@@ -10,11 +10,11 @@ variable "my_allowed_ip_cidr" {
   default     = "210.10.77.168/32" # Replace with your current public IP
 }
 
-variable "aws_region" {
-  type        = string
-  default     = "us-east-1"
-  description = "AWS Region"
-}
+# variable "aws_region" {
+#   type        = string
+#   default     = "us-east-1"
+#   description = "AWS Region"
+# }
 
 variable "domain_name" {
   type        = string
