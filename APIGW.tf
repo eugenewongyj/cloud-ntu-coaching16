@@ -182,8 +182,18 @@ resource "aws_api_gateway_stage" "prod" {
   stage_name    = "prod"
 }
 
-# 4. Map Custom Domain to Stage
-resource "aws_api_gateway_base_path_mapping" "mapping" {
+# 3. API Gateway Custom Domain Name
+resource "aws_api_gateway_domain_name" "shortener" {
+  domain_name              = "grp2.sctp-sandbox.com"
+  regional_certificate_arn = aws_acm_certificate_validation.cert.certificate_arn
+
+  endpoint_configuration {
+    types = ["REGIONAL"]
+  }
+}
+
+# 4. Map the Domain Name to the API Stage
+resource "aws_api_gateway_base_path_mapping" "shortener" {
   api_id      = aws_api_gateway_rest_api.api.id
   stage_name  = aws_api_gateway_stage.prod.stage_name
   domain_name = aws_api_gateway_domain_name.custom_domain.domain_name
@@ -195,12 +205,28 @@ resource "aws_wafv2_web_acl_association" "waf_assoc" {
   web_acl_arn  = aws_wafv2_web_acl.api_waf.arn
 }
 
-# ==========================================
-# 5. ROUTE 53 ALIAS RECORD TO CUSTOM DOMAIN
-# ==========================================
+resource "aws_route53_record" "cert_validation" {
+  for_each = {
+    for option in aws_acm_certificate.cert.domain_validation_options : option.domain_name => {
+      name   = option.resource_record_name
+      record = option.resource_record_value
+      type   = option.resource_record_type
+    }
+  }
 
-# Alias record pointing subdomain to API Gateway Custom Domain Endpoint
-resource "aws_route53_record" "api_subdomain" {
+  zone_id = data.aws_route53_zone.primary.zone_id
+  name    = each.value.name
+  type    = each.value.type
+  records = [each.value.record]
+  ttl     = 60
+}
+
+resource "aws_acm_certificate_validation" "cert" {
+  certificate_arn         = aws_acm_certificate.cert.arn
+  validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
+}
+
+resource "aws_route53_record" "www" {
   zone_id = data.aws_route53_zone.primary.zone_id
   name    = var.subdomain_name
   type    = "A"

@@ -1,4 +1,4 @@
-name: Terraform Deployment
+name: Terraform Manual Deployment
 
 on:
   workflow_dispatch:
