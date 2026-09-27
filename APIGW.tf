@@ -50,92 +50,92 @@ resource "aws_acm_certificate_validation" "cert_validation" {
   validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
 }
 
-# ==========================================
-# 3. AWS WAFv2 (WEB ACL & IP SET)
-# ==========================================
+# # ==========================================
+# # 3. AWS WAFv2 (WEB ACL & IP SET)
+# # ==========================================
 
-# Create IP Set for IP Whitelisting
-resource "aws_wafv2_ip_set" "allowed_ips" {
-  name               = "allowed-ip-set"
-  description        = "IP set for allowed client IPs"
-  scope              = "REGIONAL"
-  ip_address_version = "IPV4"
-  addresses          = [var.allowed_ip_range]
+# # Create IP Set for IP Whitelisting
+# resource "aws_wafv2_ip_set" "allowed_ips" {
+#   name               = "allowed-ip-set"
+#   description        = "IP set for allowed client IPs"
+#   scope              = "REGIONAL"
+#   ip_address_version = "IPV4"
+#   addresses          = var.my_allowed_ip_cidr
 
-  tags = {
-    Name = "allowed-ip-set"
-  }
-}
+#   tags = {
+#     Name = "allowed-ip-set"
+#   }
+# }
 
-# Create Web ACL
-resource "aws_wafv2_web_acl" "api_waf" {
-  name        = "api-gateway-waf"
-  description = "WAF for API Gateway with IP restriction"
-  scope       = "REGIONAL"
+# # Create Web ACL
+# resource "aws_wafv2_web_acl" "api_waf" {
+#   name        = "api-gateway-waf"
+#   description = "WAF for API Gateway with IP restriction"
+#   scope       = "REGIONAL"
 
-  default_action {
-    block {} # Block all traffic by default
-  }
+#   default_action {
+#     block {} # Block all traffic by default
+#   }
 
-  # Allow rule for IP Set
-  rule {
-    name     = "AllowWhitelistedIPs"
-    priority = 1
+#   # Allow rule for IP Set
+#   rule {
+#     name     = "AllowWhitelistedIPs"
+#     priority = 1
 
-    action {
-      allow {}
-    }
+#     action {
+#       allow {}
+#     }
 
-    statement {
-      ip_set_reference_statement {
-        arn = aws_wafv2_ip_set.allowed_ips.arn
-      }
-    }
+#     statement {
+#       ip_set_reference_statement {
+#         arn = aws_wafv2_ip_set.allowed_ips.arn
+#       }
+#     }
 
-    visibility_config {
-      cloudwatch_metrics_enabled = true
-      metric_name                = "AllowWhitelistedIPsMetric"
-      sampled_requests_enabled   = true
-    }
-  }
+#     visibility_config {
+#       cloudwatch_metrics_enabled = true
+#       metric_name                = "AllowWhitelistedIPsMetric"
+#       sampled_requests_enabled   = true
+#     }
+#   }
 
-  visibility_config {
-    cloudwatch_metrics_enabled = true
-    metric_name                = "ApiGatewayWAFMetric"
-    sampled_requests_enabled   = true
-  }
+#   visibility_config {
+#     cloudwatch_metrics_enabled = true
+#     metric_name                = "ApiGatewayWAFMetric"
+#     sampled_requests_enabled   = true
+#   }
 
-  tags = {
-    Name = "api-gateway-waf"
-  }
-}
+#   tags = {
+#     Name = "api-gateway-waf"
+#   }
+# }
 
-# CloudWatch Log Group for WAF Blocked Requests
-resource "aws_cloudwatch_log_group" "waf_logs" {
-  name              = "aws-waf-logs-api-gateway" # Must start with 'aws-waf-logs-'
-  retention_in_days = 14
-}
+# # CloudWatch Log Group for WAF Blocked Requests
+# resource "aws_cloudwatch_log_group" "waf_logs" {
+#   name              = "aws-waf-logs-api-gateway" # Must start with 'aws-waf-logs-'
+#   retention_in_days = 14
+# }
 
-# Configure WAF Logging to log ONLY blocked requests
-resource "aws_wafv2_web_acl_logging_configuration" "waf_logging" {
-  log_destination_configs = [aws_cloudwatch_log_group.waf_logs.arn]
-  resource_arn            = aws_wafv2_web_acl.api_waf.arn
+# # Configure WAF Logging to log ONLY blocked requests
+# resource "aws_wafv2_web_acl_logging_configuration" "waf_logging" {
+#   log_destination_configs = [aws_cloudwatch_log_group.waf_logs.arn]
+#   resource_arn            = aws_wafv2_web_acl.api_waf.arn
 
-  logging_filter {
-    default_behavior = "DROP"
+#   logging_filter {
+#     default_behavior = "DROP"
 
-    filter {
-      behavior    = "KEEP"
-      requirement = "MEETS_ANY"
+#     filter {
+#       behavior    = "KEEP"
+#       requirement = "MEETS_ANY"
 
-      condition {
-        action_condition {
-          action = "BLOCK"
-        }
-      }
-    }
-  }
-}
+#       condition {
+#         action_condition {
+#           action = "BLOCK"
+#         }
+#       }
+#     }
+#   }
+# }
 
 # ==========================================
 # 4. AMAZON API GATEWAY (REST API v1)
@@ -182,51 +182,25 @@ resource "aws_api_gateway_stage" "prod" {
   stage_name    = "prod"
 }
 
-# 3. API Gateway Custom Domain Name
-resource "aws_api_gateway_domain_name" "shortener" {
-  domain_name              = "grp2.sctp-sandbox.com"
-  regional_certificate_arn = aws_acm_certificate_validation.cert.certificate_arn
-
-  endpoint_configuration {
-    types = ["REGIONAL"]
-  }
-}
-
 # 4. Map the Domain Name to the API Stage
-resource "aws_api_gateway_base_path_mapping" "shortener" {
+resource "aws_api_gateway_base_path_mapping" "mapping" {
   api_id      = aws_api_gateway_rest_api.api.id
   stage_name  = aws_api_gateway_stage.prod.stage_name
   domain_name = aws_api_gateway_domain_name.custom_domain.domain_name
 }
 
-# 5. Associate WAF Web ACL with REST API Stage
-resource "aws_wafv2_web_acl_association" "waf_assoc" {
-  resource_arn = aws_api_gateway_stage.prod.arn
-  web_acl_arn  = aws_wafv2_web_acl.api_waf.arn
-}
+# # 5. Associate WAF Web ACL with REST API Stage
+# resource "aws_wafv2_web_acl_association" "waf_assoc" {
+#   resource_arn = aws_api_gateway_stage.prod.arn
+#   web_acl_arn  = aws_wafv2_web_acl.api_waf.arn
+# }
 
-resource "aws_route53_record" "cert_validation" {
-  for_each = {
-    for option in aws_acm_certificate.cert.domain_validation_options : option.domain_name => {
-      name   = option.resource_record_name
-      record = option.resource_record_value
-      type   = option.resource_record_type
-    }
-  }
+#==========================================
+# 5. ROUTE 53 ALIAS RECORD TO CUSTOM DOMAIN
+# ==========================================
 
-  zone_id = data.aws_route53_zone.primary.zone_id
-  name    = each.value.name
-  type    = each.value.type
-  records = [each.value.record]
-  ttl     = 60
-}
-
-resource "aws_acm_certificate_validation" "cert" {
-  certificate_arn         = aws_acm_certificate.cert.arn
-  validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
-}
-
-resource "aws_route53_record" "www" {
+# Alias record pointing subdomain to API Gateway Custom Domain Endpoint
+resource "aws_route53_record" "api_subdomain" {
   zone_id = data.aws_route53_zone.primary.zone_id
   name    = var.subdomain_name
   type    = "A"
